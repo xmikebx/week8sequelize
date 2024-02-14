@@ -1,5 +1,6 @@
 const sequelize = require("../db/connection");
 const Book = require("./model");
+const Genre = require("../genres/model");
 
 ////// ADD BOOK /////
 
@@ -8,7 +9,7 @@ const addBook = async (req, res) => {
     const book = await Book.create({
       title: req.body.title,
       author: req.body.author,
-      genre: req.body.genre,
+      GenreId: req.body.GenreId,
     });
     res.status(201).json({ message: `${book.title} was added`, book: book });
   } catch (error) {
@@ -20,7 +21,7 @@ const addBook = async (req, res) => {
 
 const getAllBooks = async (req, res) => {
   try {
-    const books = await Book.findAll({});
+    const books = await Book.findAll({ include: Genre });
     console.log("Route: ", req.path);
     res.send({ message: "all the books", books: books });
   } catch (error) {
@@ -43,6 +44,8 @@ const getABook = async (req, res) => {
     res.send({ message: "its gone pete tong", error: error });
   }
 };
+
+///// GET BOOK BY AUTHOR /////
 
 ///// UPDATE A BOOKS AUTHOR BY TITLE /////
 
