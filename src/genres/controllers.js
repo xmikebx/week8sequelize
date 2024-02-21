@@ -1,5 +1,7 @@
 const sequelize = require("../db/connection");
 const Genre = require("./model");
+const Author = require("../authors/model");
+const Book = require("../books/model");
 
 ////// ADD GENRE /////
 
