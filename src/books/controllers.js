@@ -1,6 +1,7 @@
 const sequelize = require("../db/connection");
 const Book = require("./model");
 const Genre = require("../genres/model");
+const Author = require("../authors/model");
 
 ////// ADD BOOK /////
 
@@ -8,7 +9,7 @@ const addBook = async (req, res) => {
   try {
     const book = await Book.create({
       title: req.body.title,
-      author: req.body.author,
+      AuthorId: req.body.AuthorId,
       GenreId: req.body.GenreId,
     });
     res.status(201).json({ message: `${book.title} was added`, book: book });
@@ -21,7 +22,7 @@ const addBook = async (req, res) => {
 
 const getAllBooks = async (req, res) => {
   try {
-    const books = await Book.findAll({ include: Genre });
+    const books = await Book.findAll({ include: { all: true } });
     console.log("Route: ", req.path);
     res.send({ message: "all the books", books: books });
   } catch (error) {
@@ -29,37 +30,48 @@ const getAllBooks = async (req, res) => {
   }
 };
 
-///// GET A BOOK /////
+///// GET A BOOK BY TITLE /////
 
-const getABook = async (req, res) => {
+const getABookByTitle = async (req, res) => {
   try {
-    const books = await Book.findOne({
-      where: { title: req.body.title },
+    const book = await Book.findOne({
+      where: { title: req.params.title },
       rejectOnEmpty: true,
+      include: { all: true },
     });
 
     console.log("Route: ", req.path);
-    res.send({ message: "the book", books: books });
+    res.send({ book: book });
   } catch (error) {
     res.send({ message: "its gone pete tong", error: error });
   }
 };
 
-///// GET BOOK BY AUTHOR /////
-
-///// UPDATE A BOOKS AUTHOR BY TITLE /////
+///// UPDATE A BOOKS DETAILS BY LOCATING WITH TITLE /////
 
 const updateBook = async (req, res) => {
   try {
-    const update = await Book.update(
-      { author: req.body.author },
-      { where: { title: req.body.title } }
-    );
-    console.log("book updated:", update);
-    res.send({ message: "book updated", update: update });
+    ///// book to update located by title parameter /////
+    const bookToUpdate = await Book.findOne({
+      where: { title: req.params.title },
+    });
+    ///// create an object containing the body key/value pairs /////
+    const updatedBookDetails = {
+      title: req.body.title,
+      AuthorId: req.body.AuthorId,
+      GenreId: req.body.GenreId,
+    };
+    // console.log(updatedBookDetails);
+
+    ///// update the book with those details /////
+    bookToUpdate.update(updatedBookDetails);
+
+    res.send({ message: "book updated", bookToUpdate });
   } catch (error) {
     res.send({ message: "its gone pete tong", error: error });
   }
+
+  // console.log(getTitle);
 };
 
 ///// DELETE A BOOK BY TITLE /////
@@ -83,8 +95,9 @@ const deleteBook = async (req, res) => {
 
 const deleteAllBooks = async (req, res) => {
   try {
-    const destroyAllBooks = await sequelize.destroyAll({
-      where: {},
+    ///// deletes all books but not the authors & genres, they could be included in this
+    const destroyAllBooks = await Book.destroy({
+      truncate: true,
     });
 
     console.log("all books deleted:", destroyAllBooks);
@@ -102,6 +115,6 @@ module.exports = {
   getAllBooks: getAllBooks,
   updateBook: updateBook,
   deleteBook: deleteBook,
-  getABook: getABook,
+  getABookByTitle: getABookByTitle,
   deleteAllBooks: deleteAllBooks,
 };
